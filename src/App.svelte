@@ -3,6 +3,7 @@
   import { LANGUAGES, t } from './lib/translations.js';
   import EarTraining from './components/EarTraining.svelte';
   import ScoreDisplay from './components/ScoreDisplay.svelte';
+  import { version as appVersion } from '../package.json';
 </script>
 
 <main>
@@ -30,6 +31,7 @@
 
   <footer>
     <p>{t('ui', 'footer', $currentLang)}</p>
+    <p class="version">v{appVersion}</p>
   </footer>
 </main>
 
@@ -108,6 +110,11 @@
     text-align: center;
     color: rgba(255, 255, 255, 0.4);
     font-size: 0.875rem;
+  }
+
+  .version {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.25);
   }
 
   @media (max-width: 600px) {
