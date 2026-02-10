@@ -303,7 +303,7 @@ export const translations = {
       hi: 'उस कुंजी पर क्लिक करें जहां आपको लगता है दूसरा स्वर है',
       es: 'Haz clic en la tecla del segundo tono',
       fr: 'Cliquez sur la touche de la 2ème note',
-      fi: 'Klikkaa näppäintä, jossa toinen sävel on'
+      fi: 'Klikkaa kosketinta, jossa toinen sävel on'
     },
     tryAgain: {
       en: 'Try again!',
