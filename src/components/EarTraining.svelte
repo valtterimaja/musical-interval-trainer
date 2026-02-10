@@ -5,7 +5,7 @@
     currentQuestion, feedback, settings, currentScale, currentStage,
     stageProgress, canAdvance, incrementScore, setFeedback, clearFeedback,
     advanceStage, resetToFirstStage, currentLang, decrementScore,
-    gameCompleted, completeGame, score, scorePercentage
+    gameCompleted, completeGame, score, scorePercentage, testMode
   } from '../lib/stores.js';
   import { t, getIntervalName, getScaleName, getScaleDescription } from '../lib/translations.js';
   import PianoKeyboard from './PianoKeyboard.svelte';
@@ -17,6 +17,7 @@
   let audioUnlocked = false;
   let attemptCount = 0; // 0 = no attempt, 1 = first try, 2 = second try
   let autoAdvanceTimer = null;
+  let feedbackIntervalName = ''; // Captured at answer time to avoid reactive timing issues
 
   // Piano range based on scale's octave setting
   const PIANO_START = 57; // A3
@@ -82,6 +83,7 @@
 
     if (isCorrect) {
       guessedNote = clickedMidi;
+      feedbackIntervalName = getIntervalName($currentQuestion.interval.shortName, $currentLang);
       setFeedback('correct');
       incrementScore(true);
 
@@ -107,6 +109,7 @@
       } else {
         // Second wrong attempt - show correct answer, deduct point, move on
         guessedNote = clickedMidi;
+        feedbackIntervalName = getIntervalName($currentQuestion.interval.shortName, $currentLang);
         setFeedback('incorrect');
         decrementScore();
 
@@ -143,15 +146,14 @@
     : null;
 
   // Progress percentage for current stage
-  $: progressPercent = $currentScale?.requiredCorrect
-    ? Math.min(100, ($stageProgress / $currentScale.requiredCorrect) * 100)
+  $: stageRequired = $testMode ? 1 : $currentScale?.requiredCorrect;
+  $: progressPercent = stageRequired
+    ? Math.min(100, ($stageProgress / stageRequired) * 100)
     : 100;
 
   // Is this the final stage?
   $: isFinalStage = $currentStage === SCALES.length - 1;
 
-  // Translated interval names
-  $: correctIntervalName = $currentQuestion ? getIntervalName($currentQuestion.interval.shortName, $currentLang) : '';
   $: guessedIntervalName = guessedInterval ? getIntervalName(guessedInterval.shortName, $currentLang) : '';
 
   // Initialize with a question
@@ -200,7 +202,7 @@
 
       <div class="progress-bar">
         <div class="progress-fill" style="width: {progressPercent}%"></div>
-        <span class="progress-text">{$stageProgress}/{$currentScale?.requiredCorrect}</span>
+        <span class="progress-text">{$stageProgress}/{stageRequired}</span>
       </div>
     </div>
 
@@ -245,11 +247,11 @@
 
     {#if $feedback === 'correct'}
       <div class="feedback correct">
-        {t('ui', 'correct', $currentLang)} {correctIntervalName}
+        {t('ui', 'correct', $currentLang)} {feedbackIntervalName}
       </div>
     {:else if $feedback === 'incorrect'}
       <div class="feedback incorrect">
-        {t('ui', 'incorrect', $currentLang)} {t('ui', 'itWas', $currentLang)} {correctIntervalName}
+        {t('ui', 'incorrect', $currentLang)} {t('ui', 'itWas', $currentLang)} {feedbackIntervalName}
       </div>
     {/if}
 

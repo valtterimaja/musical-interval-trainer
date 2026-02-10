@@ -39,12 +39,18 @@ export const scorePercentage = derived(score, ($score) => {
   return Math.round(($score.correct / $score.total) * 100);
 });
 
+// Test mode: add ?test to URL to require only 1 correct answer per stage
+export const testMode = writable(
+  typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('test')
+);
+
 // Derived store to check if can advance to next stage
 export const canAdvance = derived(
-  [currentStage, stageProgress],
-  ([$stage, $progress]) => {
+  [currentStage, stageProgress, testMode],
+  ([$stage, $progress, $testMode]) => {
     const scale = SCALES[$stage];
-    return scale.requiredCorrect !== null && $progress >= scale.requiredCorrect;
+    const required = $testMode ? 1 : scale.requiredCorrect;
+    return required !== null && $progress >= required;
   }
 );
 
