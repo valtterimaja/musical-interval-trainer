@@ -48,7 +48,7 @@ export const SCALES = SCALE_FAMILIES.flatMap((family, fi) => {
       octaves,
       direction: v.direction,
       startFromRoot: v.startFromRoot,
-      requiredCorrect: (isLastFamily && octaves === 2 && v.suffix === 'both') ? null : requiredCorrect,
+      requiredCorrect,
       ...(octaves === 2 ? { maxInterval: 12 } : {}),
     }));
   });

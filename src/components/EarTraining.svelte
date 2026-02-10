@@ -4,7 +4,8 @@
   import {
     currentQuestion, feedback, settings, currentScale, currentStage,
     stageProgress, canAdvance, incrementScore, setFeedback, clearFeedback,
-    advanceStage, resetToFirstStage, currentLang, decrementScore
+    advanceStage, resetToFirstStage, currentLang, decrementScore,
+    gameCompleted, completeGame, score, scorePercentage
   } from '../lib/stores.js';
   import { t, getIntervalName, getScaleName, getScaleDescription } from '../lib/translations.js';
   import PianoKeyboard from './PianoKeyboard.svelte';
@@ -84,8 +85,10 @@
       setFeedback('correct');
       incrementScore(true);
 
-      // Check if we should show advance prompt
-      if ($canAdvance) {
+      // Check if we should show advance prompt or complete game
+      if ($canAdvance && isFinalStage) {
+        completeGame();
+      } else if ($canAdvance) {
         showAdvancePrompt = true;
       } else {
         // Auto-advance after delay
@@ -158,92 +161,118 @@
 </script>
 
 <div class="ear-training">
-  <!-- Stage info -->
-  <div class="stage-info">
-    <div class="stage-header">
-      <span class="stage-label">{t('ui', 'stage', $currentLang)} {$currentStage + 1}/{SCALES.length}</span>
-      <h2 class="stage-name">{getScaleName($currentScale?.id, $currentLang)}</h2>
-      <p class="stage-desc">{getScaleDescription($currentScale?.id, $currentLang)}</p>
-    </div>
+  {#if $gameCompleted}
+    <div class="congratulations">
+      <h1 class="congrats-title">{t('ui', 'congratulations', $currentLang)}</h1>
+      <p class="congrats-subtitle">{t('ui', 'youCompleted', $currentLang)}</p>
 
-    {#if !isFinalStage}
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-value">{$score.correct}</span>
+          <span class="stat-label">{t('ui', 'statsCorrect', $currentLang)}</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value">{$score.total}</span>
+          <span class="stat-label">{t('ui', 'statsTotal', $currentLang)}</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value">{$scorePercentage}%</span>
+          <span class="stat-label">{t('ui', 'statsAccuracy', $currentLang)}</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value">{SCALES.length}</span>
+          <span class="stat-label">{t('ui', 'stagesCompleted', $currentLang)}</span>
+        </div>
+      </div>
+
+      <button class="play-again-btn" on:click={handleRestart}>
+        {t('ui', 'playAgain', $currentLang)}
+      </button>
+    </div>
+  {:else}
+    <!-- Stage info -->
+    <div class="stage-info">
+      <div class="stage-header">
+        <span class="stage-label">{t('ui', 'stage', $currentLang)} {$currentStage + 1}/{SCALES.length}</span>
+        <h2 class="stage-name">{getScaleName($currentScale?.id, $currentLang)}</h2>
+        <p class="stage-desc">{getScaleDescription($currentScale?.id, $currentLang)}</p>
+      </div>
+
       <div class="progress-bar">
         <div class="progress-fill" style="width: {progressPercent}%"></div>
         <span class="progress-text">{$stageProgress}/{$currentScale?.requiredCorrect}</span>
       </div>
-    {:else}
-      <div class="mastery-badge">{t('ui', 'masterLevel', $currentLang)}</div>
-    {/if}
-  </div>
+    </div>
 
-  <div class="controls">
+    <div class="controls">
+      {#if !audioUnlocked}
+        <button class="play-btn start-btn" on:click={startTraining}>
+          {t('ui', 'startTraining', $currentLang)}
+        </button>
+      {:else}
+        <button class="play-btn replay-btn" on:click={playCurrentInterval}>
+          {t('ui', 'replay', $currentLang)}
+        </button>
+      {/if}
+
+      <button class="type-toggle" on:click={toggleIntervalType}>
+        {$settings.intervalType === 'melodic' ? t('ui', 'melodic', $currentLang) : t('ui', 'harmonic', $currentLang)}
+      </button>
+    </div>
+
     {#if !audioUnlocked}
-      <button class="play-btn start-btn" on:click={startTraining}>
-        {t('ui', 'startTraining', $currentLang)}
-      </button>
-    {:else}
-      <button class="play-btn replay-btn" on:click={playCurrentInterval}>
-        {t('ui', 'replay', $currentLang)}
-      </button>
+      <p class="instruction">{t('ui', 'clickToStart', $currentLang)}</p>
+    {:else if $feedback === 'tryagain'}
+      <p class="instruction try-again">{t('ui', 'tryAgain', $currentLang)}</p>
+    {:else if !$feedback}
+      <p class="instruction">{t('ui', 'clickTheKey', $currentLang)}</p>
     {/if}
 
-    <button class="type-toggle" on:click={toggleIntervalType}>
-      {$settings.intervalType === 'melodic' ? t('ui', 'melodic', $currentLang) : t('ui', 'harmonic', $currentLang)}
-    </button>
-  </div>
+    {#if $currentQuestion}
+      <PianoKeyboard
+        startMidi={PIANO_START}
+        numKeys={pianoKeys}
+        highlightedNotes={[$currentQuestion.baseNote]}
+        {activeNotes}
+        correctNote={($feedback === 'correct' || $feedback === 'incorrect') ? $currentQuestion.secondNote : null}
+        guessedNote={$feedback === 'incorrect' ? guessedNote : null}
+        wrongGuessNote={$feedback === 'tryagain' ? wrongGuessNote : null}
+        interactive={true}
+        disabled={!audioUnlocked || !hasPlayed || $feedback === 'correct' || $feedback === 'incorrect'}
+        on:keyclick={handleKeyClick}
+      />
+    {/if}
 
-  {#if !audioUnlocked}
-    <p class="instruction">{t('ui', 'clickToStart', $currentLang)}</p>
-  {:else if $feedback === 'tryagain'}
-    <p class="instruction try-again">{t('ui', 'tryAgain', $currentLang)}</p>
-  {:else if !$feedback}
-    <p class="instruction">{t('ui', 'clickTheKey', $currentLang)}</p>
-  {/if}
+    {#if $feedback === 'correct'}
+      <div class="feedback correct">
+        {t('ui', 'correct', $currentLang)} {correctIntervalName}
+      </div>
+    {:else if $feedback === 'incorrect'}
+      <div class="feedback incorrect">
+        {t('ui', 'incorrect', $currentLang)} {t('ui', 'itWas', $currentLang)} {correctIntervalName}
+      </div>
+    {/if}
 
-  {#if $currentQuestion}
-    <PianoKeyboard
-      startMidi={PIANO_START}
-      numKeys={pianoKeys}
-      highlightedNotes={[$currentQuestion.baseNote]}
-      {activeNotes}
-      correctNote={($feedback === 'correct' || $feedback === 'incorrect') ? $currentQuestion.secondNote : null}
-      guessedNote={$feedback === 'incorrect' ? guessedNote : null}
-      wrongGuessNote={$feedback === 'tryagain' ? wrongGuessNote : null}
-      interactive={true}
-      disabled={!audioUnlocked || !hasPlayed || $feedback === 'correct' || $feedback === 'incorrect'}
-      on:keyclick={handleKeyClick}
-    />
-  {/if}
+    {#if showAdvancePrompt && !isFinalStage}
+      {@const nextScale = SCALES[$currentStage + 1]}
+      {@const nextName = getScaleName(nextScale?.id, $currentLang)}
+      {@const nextDesc = getScaleDescription(nextScale?.id, $currentLang)}
+      {@const currName = getScaleName($currentScale?.id, $currentLang)}
+      {@const scaleChanged = nextName !== currName}
+      <div class="advance-prompt">
+        <p>{t('ui', 'youveMastered', $currentLang)} {getScaleDescription($currentScale?.id, $currentLang)}!</p>
+        <button class="advance-btn" on:click={handleAdvance}>
+          {t('ui', 'continueTo', $currentLang)}
+          {#if scaleChanged}<strong>{nextName}</strong> &mdash; {/if}{nextDesc}
+        </button>
+      </div>
+    {/if}
 
-  {#if $feedback === 'correct'}
-    <div class="feedback correct">
-      {t('ui', 'correct', $currentLang)} {correctIntervalName}
-    </div>
-  {:else if $feedback === 'incorrect'}
-    <div class="feedback incorrect">
-      {t('ui', 'incorrect', $currentLang)} {t('ui', 'itWas', $currentLang)} {correctIntervalName}
-    </div>
-  {/if}
-
-  {#if showAdvancePrompt && !isFinalStage}
-    {@const nextScale = SCALES[$currentStage + 1]}
-    {@const nextName = getScaleName(nextScale?.id, $currentLang)}
-    {@const nextDesc = getScaleDescription(nextScale?.id, $currentLang)}
-    {@const currName = getScaleName($currentScale?.id, $currentLang)}
-    {@const scaleChanged = nextName !== currName}
-    <div class="advance-prompt">
-      <p>{t('ui', 'youveMastered', $currentLang)} {getScaleDescription($currentScale?.id, $currentLang)}!</p>
-      <button class="advance-btn" on:click={handleAdvance}>
-        {t('ui', 'continueTo', $currentLang)}
-        {#if scaleChanged}<strong>{nextName}</strong> &mdash; {/if}{nextDesc}
+    {#if $currentStage > 0}
+      <button class="restart-btn" on:click={handleRestart}>
+        {t('ui', 'restartFromStage1', $currentLang)}
       </button>
-    </div>
-  {/if}
-
-  {#if $currentStage > 0}
-    <button class="restart-btn" on:click={handleRestart}>
-      {t('ui', 'restartFromStage1', $currentLang)}
-    </button>
+    {/if}
   {/if}
 </div>
 
@@ -315,16 +344,6 @@
     font-weight: 600;
     color: white;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-  }
-
-  .mastery-badge {
-    display: inline-block;
-    padding: 0.5rem 1rem;
-    background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
-    border-radius: 20px;
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: white;
   }
 
   .controls {
@@ -448,5 +467,77 @@
   .restart-btn:hover {
     background: rgba(255, 255, 255, 0.05);
     color: rgba(255, 255, 255, 0.8);
+  }
+
+  .congratulations {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    text-align: center;
+    padding: 2rem 1rem;
+  }
+
+  .congrats-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+    background: linear-gradient(135deg, #f59e0b 0%, #ef4444 50%, #a78bfa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .congrats-subtitle {
+    font-size: 1.25rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin: 0;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    width: 100%;
+    max-width: 360px;
+  }
+
+  .stat-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+  }
+
+  .stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #a78bfa;
+  }
+
+  .stat-label {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  .play-again-btn {
+    padding: 1rem 2.5rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .play-again-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
   }
 </style>

@@ -27,6 +27,9 @@ export const currentQuestion = writable(null);
 // Feedback state: null, 'correct', or 'incorrect'
 export const feedback = writable(null);
 
+// Game completed state
+export const gameCompleted = writable(false);
+
 // Derived store for current scale
 export const currentScale = derived(currentStage, ($stage) => SCALES[$stage]);
 
@@ -84,10 +87,15 @@ export function advanceStage() {
   stageProgress.set(0);
 }
 
+export function completeGame() {
+  gameCompleted.set(true);
+}
+
 export function resetToFirstStage() {
   currentStage.set(0);
   stageProgress.set(0);
   score.set({ correct: 0, total: 0 });
+  gameCompleted.set(false);
 }
 
 export function clearFeedback() {

@@ -400,6 +400,62 @@ export const translations = {
       es: 'Aprende a reconocer intervalos musicales',
       fr: 'Apprenez à reconnaître les intervalles',
       fi: 'Opi tunnistamaan intervallit harjoittelemalla'
+    },
+    congratulations: {
+      en: 'Congratulations!',
+      zh: '恭喜！',
+      hi: 'बधाई हो!',
+      es: '¡Felicidades!',
+      fr: 'Félicitations !',
+      fi: 'Onnittelut!'
+    },
+    youCompleted: {
+      en: 'You completed all stages!',
+      zh: '你完成了所有阶段！',
+      hi: 'आपने सभी चरण पूरे कर लिए!',
+      es: '¡Has completado todas las etapas!',
+      fr: 'Vous avez terminé toutes les étapes !',
+      fi: 'Olet suorittanut kaikki tasot!'
+    },
+    statsCorrect: {
+      en: 'Correct answers',
+      zh: '正确答案',
+      hi: 'सही उत्तर',
+      es: 'Respuestas correctas',
+      fr: 'Réponses correctes',
+      fi: 'Oikeat vastaukset'
+    },
+    statsTotal: {
+      en: 'Total attempts',
+      zh: '总尝试次数',
+      hi: 'कुल प्रयास',
+      es: 'Intentos totales',
+      fr: 'Tentatives totales',
+      fi: 'Yrityksiä yhteensä'
+    },
+    statsAccuracy: {
+      en: 'Accuracy',
+      zh: '准确率',
+      hi: 'सटीकता',
+      es: 'Precisión',
+      fr: 'Précision',
+      fi: 'Tarkkuus'
+    },
+    stagesCompleted: {
+      en: 'Stages completed',
+      zh: '已完成阶段',
+      hi: 'पूर्ण चरण',
+      es: 'Etapas completadas',
+      fr: 'Étapes terminées',
+      fi: 'Suoritetut tasot'
+    },
+    playAgain: {
+      en: 'Play Again',
+      zh: '再玩一次',
+      hi: 'फिर से खेलें',
+      es: 'Jugar de nuevo',
+      fr: 'Rejouer',
+      fi: 'Pelaa uudelleen'
     }
   }
 };
