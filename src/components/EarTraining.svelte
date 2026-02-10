@@ -226,10 +226,16 @@
   {/if}
 
   {#if showAdvancePrompt && !isFinalStage}
+    {@const nextScale = SCALES[$currentStage + 1]}
+    {@const nextName = getScaleName(nextScale?.id, $currentLang)}
+    {@const nextDesc = getScaleDescription(nextScale?.id, $currentLang)}
+    {@const currName = getScaleName($currentScale?.id, $currentLang)}
+    {@const scaleChanged = nextName !== currName}
     <div class="advance-prompt">
-      <p>{t('ui', 'youveMastered', $currentLang)} {getScaleName($currentScale?.id, $currentLang)}!</p>
+      <p>{t('ui', 'youveMastered', $currentLang)} {getScaleDescription($currentScale?.id, $currentLang)}!</p>
       <button class="advance-btn" on:click={handleAdvance}>
-        {t('ui', 'continueTo', $currentLang)} {getScaleName(SCALES[$currentStage + 1]?.id, $currentLang)}
+        {t('ui', 'continueTo', $currentLang)}
+        {#if scaleChanged}<strong>{nextName}</strong> &mdash; {/if}{nextDesc}
       </button>
     </div>
   {/if}
