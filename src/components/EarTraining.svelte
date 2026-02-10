@@ -118,13 +118,13 @@
   function handleAdvance() {
     clearAutoAdvance();
     advanceStage();
-    newQuestion();
+    // newQuestion() is called automatically by the reactive block when $currentScale changes
   }
 
   function handleRestart() {
     clearAutoAdvance();
     resetToFirstStage();
-    newQuestion();
+    // newQuestion() is called automatically by the reactive block when $currentScale changes
   }
 
   function toggleIntervalType() {
